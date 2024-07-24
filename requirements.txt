@@ -1,0 +1,5 @@
+spacy>=3.7.5, <3.8.0
+PyMuPDF==1.24.7
+numpy==1.26.4
+mysql-connector-python==9.0.0
+git+https://github.com/didymo/LRVSP_spacy@main
