@@ -82,7 +82,8 @@ try:
                 cursor.execute(DROP_PATH_QUERY.format(pathId))
                 # extract links
                 doc = nlp(text)
-                links = set([ent.text for ent in doc.ents if ent.label_ == "ref_doc" and 4*math.ceil((len(ent.text)/3)) < 255])
+                # create set (remove duplicates) of all links in a document, removing any caught "the " prefix
+                links = {ent.text.removeprefix("the ") for ent in doc.ents if ent.label_ == "ref_doc" and 4*math.ceil((len(ent.text)/3)) < 255}
                 metadata = base64.b64encode("".encode()).decode() # empty metadata string
                 # push new DocObj to database
                 cursor.execute(MAKE_DOC_QUERY.format(b64Name,metadata,entId,len(links)))
