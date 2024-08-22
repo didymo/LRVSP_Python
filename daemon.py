@@ -58,11 +58,11 @@ try:
             cursor = cnx.cursor()
             # set transaction level
             cursor.execute(TRANSACTION_LEVEL_QUERY)
-            cnx.commit()
 
             # get filepaths to process
             cursor.execute(GET_PATHS_QUERY.format(PARSE_LIMIT))
             results = [res for res in cursor] # extract all results in cursor iterator so we can use it for other things
+            cnx.commit() # commit a select statement?????? IDK why this needs to be here. But it does.
             for res in results:
                 # start transaction
                 cnx.start_transaction(isolation_level="READ COMMITTED")
