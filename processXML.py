@@ -29,8 +29,8 @@ def process(xml: str)->dict[str, dict, set]:
     with open(f"{xml}",'r',encoding="utf8") as input:
         soup = bs4.BeautifulSoup(input, 'xml')
         metadata = {attrib["name"]:attrib["value"] for attrib in soup.exdoc.parentattributes.find_all("attrib") if attrib["value"] != ""}
-        id = metadata["id"]
-        title = metadata["title"]
+        docId = metadata["id"]
+        docTitle = metadata["title"]
         refs:set[reference] = set()
         for ref in soup.find_all("legref"):
             for name, value in ref.attrs.items():
@@ -40,11 +40,11 @@ def process(xml: str)->dict[str, dict, set]:
             else:
                 title = getTitle(ref)
                 refs.add(reference(title, title))
-        refs.discard(reference(id, "")) # discard self references
-        refs.discard(reference(title, "")) # discard self references
+        refs.discard(reference(docId, ""))    # discard self references
+        refs.discard(reference(docTitle, "")) #
 
         retDict = {
-            "name": title,
+            "name": docTitle,
             "metadata": metadata,
             "links": {ref.title for ref in refs} # links is only a set of titles, we don't care about the ids
         }
