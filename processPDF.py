@@ -3,6 +3,7 @@ import random
 import numpy
 import math
 import re
+import spacy
 
 DIFF = 0.01 # how similiar positions should be to each other to count as the same
 LINE_FRAC = 0.3 # how much of the page should be checked for header/footer lines
@@ -265,7 +266,30 @@ def extractText(doc: pymupdf.Document)->str:
     # write to file
     return outString
 
-def process(path: str)->str:
+def process(path: str)->dict[str, dict, set]:
     with pymupdf.open(path) as inDoc:
+        # get file name (and b64 encode it for later)
+        name = path.split('/')[-1]
+        # get file type
+        fType = path.split('.')[-1].lower()
+        # remove suffixes and filetype from file name for entity creation
+        fileName = name.removesuffix(f".{fType}")
+        fileId = re.search(r"_\d+$",fileName,re.MULTILINE)
+        if fileId:
+            fileName = fileName.removesuffix(fileId.group(0))
+        # remove all headers and footers
         outDoc = removeHeaderFooter(inDoc)
-        return extractText(outDoc)
+        # extract the text
+        text = extractText(outDoc)
+        # do spacy processing
+        nlp = spacy.load("en_LRVSP_spacy")
+        doc = nlp(text)
+        links = {ent.text.removeprefix("the ") for ent in doc.ents if ent.label_ == "ref_doc" and 4*math.ceil((len(ent.text)/3)) < 255}
+
+        retDict = {
+            "name": fileName,
+            "metadata": dict(),
+            "links": links
+        }
+
+        return retDict
