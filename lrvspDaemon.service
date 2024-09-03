@@ -4,6 +4,9 @@ Requires=mysql.service
 After=mysql.service
 
 [Service]
+User=$USER
+Group=$GROUP
 ExecStart=$LRVSP_PYTHON_VENV/bin/python $LRVSP_PYTHON_ROOT/daemon.py
 Environment="PATH=$LRVSP_PYTHON_VENV/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="HOME=$HOME"
 WorkingDirectory=$LRVSP_PYTHON_ROOT
