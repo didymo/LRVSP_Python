@@ -1,0 +1,9 @@
+[Unit]
+Description=The document processing daemon for LRVSP
+Requires=mysql.service
+After=mysql.service
+
+[Service]
+ExecStart=$LRVSP_PYTHON_VENV/bin/python $LRVSP_PYTHON_ROOT/daemon.py
+Environment="PATH=$LRVSP_PYTHON_VENV/bin"
+WorkingDirectory=$LRVSP_PYTHON_ROOT
