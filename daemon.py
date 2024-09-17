@@ -28,7 +28,7 @@ FILE_TYPES: dict[str, function] = {
 TRANSACTION_LEVEL_QUERY = '''
     SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED
 '''
-GET_PATHS_QUERY = '''SELECT ID, path, entityId
+GET_PATHS_QUERY = '''SELECT ID, pdfPath, processPath, entityId
                      FROM FilePaths
                      WHERE failed = 0 LIMIT {}'''
 UPDATE_PATH_QUERY = '''UPDATE FilePaths
@@ -37,8 +37,8 @@ UPDATE_PATH_QUERY = '''UPDATE FilePaths
 DROP_PATH_QUERY = '''DELETE FROM FilePaths WHERE ID = {}'''
 MAKE_DOC_QUERY = '''INSERT INTO DocObjs (title, metadata, entityId, numLinks)
                     VALUES ("{}", "{}", {}, {})'''
-MAKE_LINK_QUERY = '''INSERT INTO LinkObjs (fromTitle, toTitle)
-                     VALUES ("{}", "{}")'''
+MAKE_LINK_QUERY = '''INSERT INTO LinkObjs (fromTitle, toTitle, pages)
+                     VALUES ("{}", "{}", "{}")'''
 CHECK_REMAINING_QUERY = '''SELECT SUM(rowCount) FROM (
                            SELECT COUNT(*) AS rowCount
                                FROM FilePaths WHERE failed = 0
@@ -87,12 +87,21 @@ try:
 
             # get results
             pathId: int = res[0]
-            file: str = res[1]
-            entId: int = res[2]
+            pdfPath: str = res[1]
+            processPath: str = res[2]
+            entId: int = res[3]
 
+            # use process path for processing if possible,
+            # otherwise use the pdf
+            if processPath == "":
+                file = pdfPath
+            else:
+                file = processPath
+            
             # get file type
             fType = file.split('.')[-1].lower()
             fName = file.split('/')[-1].removesuffix(fType)
+                
             if fType in FILE_TYPES:
                 msg = "\t{}\t| Processing new {}: {}"
                 logger.info(msg.format(timeNow(), fType, fName))
@@ -157,7 +166,8 @@ try:
                 for link in links:
                     b64Link = base64.b64encode(link.encode()).decode()
                     cursor.execute(MAKE_LINK_QUERY.format(b64Name,
-                                                          b64Link))
+                                                          b64Link,
+                                                          "[]"))
             except mysql.connector.Error as e:
                 msg = "\t{}\t| Error pushing to database: {}"
                 logger.error(msg.format(timeNow(), e))
