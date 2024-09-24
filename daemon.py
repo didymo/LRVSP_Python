@@ -97,11 +97,11 @@ try:
                 file = pdfPath
             else:
                 file = processPath
-            
+
             # get file type
             fType = file.split('.')[-1].lower()
             fName = file.split('/')[-1].removesuffix(fType)
-                
+
             if fType in FILE_TYPES:
                 msg = "\t{}\t| Processing new {}: {}"
                 logger.info(msg.format(timeNow(), fType, fName))
@@ -188,20 +188,23 @@ try:
         # tell drupal to start processing
         result = subprocess.run([f"{DRUPAL_PATH}/vendor/bin/drush",
                                  "lrvsCheck-db",
-                                 str(CREATE_LIMIT)])
-        # if result.returncode == 0:
-        #     res = result.stdout
-        #     # decode into str if bytes returned
-        #     if isinstance(res, bytes):
-        #         res = res.decode()
-        #     logger.info(f"\t{timeNow()}\t| {res}")
-        # else:
-        #     res = result.stderr
-        #     # decode into str if bytes returned
-        #     if isinstance(res, bytes):
-        #         res = res.decode()
-        #     msg = "\t{}\t| Drush failed with error code {} {}"
-        #     logger.error(msg.format(timeNow(), result.returncode, res))
+                                 str(CREATE_LIMIT)],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        if result.returncode == 0:
+            res = result.stdout
+            # decode into str if bytes returned
+            if isinstance(res, bytes):
+                res = res.decode()
+            logger.info(f"\t{timeNow()}\t| {res}")
+        else:
+            res = result.stdout
+            # decode into str if bytes returned
+            if isinstance(res, bytes):
+                res = res.decode()
+            msg = "\t{}\t| Drush failed with error code {} {}"
+            logger.error(msg.format(timeNow(), result.returncode, res))
+
         # determine how long this took
         endTime = timer()
         timeTaken = endTime-startTime
