@@ -380,12 +380,34 @@ def process(path: str) -> dict[str, dict, set]:
         outDoc = removeHeaderFooter(inDoc)
         # extract the text
         text = extractText(outDoc)
+        # check length of text
+        texts = []
+        while (len(text) >= 1000000):
+            # get split location
+            i = 90000
+            try:
+                # check for next new sentence
+                # . followed by space followed by upper case
+                while (text[i] != ' ' and text[i-1] != '.'
+                       and text[i+1].upper() != text[i+1]
+                       and i < 100000):
+                    i += 1
+            except IndexError:
+                # no new sentences in at least 10000 chars,
+                # just split at 90000
+                i = 90000
+            texts.append(text[:i])
+            text = text[i:]
+        texts.append(text)
+
         # do spacy processing
         nlp = spacy.load("en_LRVSP_spacy")
-        doc = nlp(text)
-        links = {ent.text.removeprefix("the ") for ent in doc.ents
-                 if ent.label_ == "ref_doc"
-                 and 4*math.ceil((len(ent.text)/3)) < 255}
+        links = set()
+        for t in texts:
+            doc = nlp(t)
+            links.update({ent.text.removeprefix("the ") for ent in doc.ents
+                          if ent.label_ == "ref_doc"
+                          and 4*math.ceil((len(ent.text)/3)) < 255})
 
         retDict = {
             "name": fileName,
